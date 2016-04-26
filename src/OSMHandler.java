@@ -1,4 +1,5 @@
 import java.io.*;
+import java.util.HashMap;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -13,6 +14,7 @@ public class OSMHandler extends DefaultHandler {
 	private int waysCount, nodesCount;
 	static BufferedWriter bw;
 	static BufferedWriter roadNodeBw;
+	HashMap<String, Integer> map = new HashMap<String, Integer>();
 
 	@Override
 	public void endDocument() throws SAXException {
@@ -34,8 +36,8 @@ public class OSMHandler extends DefaultHandler {
 		waysCount = 0;
 		nodesCount = 0;
 		try {
-			bw = new BufferedWriter(new FileWriter("rochester_nodes_old.txt"));
-			roadNodeBw = new BufferedWriter(new FileWriter("rochester_roads_old.txt"));
+			bw = new BufferedWriter(new FileWriter("porto_nodes.txt"));
+			roadNodeBw = new BufferedWriter(new FileWriter("porto_roads.txt"));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -43,34 +45,22 @@ public class OSMHandler extends DefaultHandler {
 
 	@Override
 	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-		if ("way".equals(qName)) {
-			waysCount++;
-			try {
+		try {
+			if ("way".equals(qName)) {
 				roadNodeBw.newLine();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-			// System.out.println(attributes.getValue("id"));
-		} else if ("nd".equals(qName)) {
-			try {
-				roadNodeBw.write(attributes.getValue("ref") + " ");
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		} else if ("node".equals(qName)) {
-			try {
+				roadNodeBw.write(waysCount + " " + attributes.getValue("id").toString() + " primary ");
+				waysCount++;
+			} else if ("nd".equals(qName)) {
+				roadNodeBw.write(map.get(attributes.getValue("ref").toString()) + " ");
+			} else if ("node".equals(qName)) {
+				map.put(attributes.getValue("id").toString(), nodesCount);
 				bw.write(nodesCount + " " + attributes.getValue("id").toString() + " " + attributes.getValue("lat")
 						+ " " + attributes.getValue("lon").toString());
 				bw.newLine();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				nodesCount++;
 			}
-			nodesCount++;
-
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -89,7 +79,7 @@ public class OSMHandler extends DefaultHandler {
 			// 实例化 DefaultHandler对象
 			OSMHandler parseXml = new OSMHandler();
 			// 加载资源文件 转化为一个输入流
-			InputStream stream = OSMHandler.class.getClassLoader().getResourceAsStream("rochester_new-york.osm");
+			InputStream stream = OSMHandler.class.getClassLoader().getResourceAsStream("porto_portugal.osm");
 			// 调用parse()方法
 			parser.parse(stream, parseXml);
 
